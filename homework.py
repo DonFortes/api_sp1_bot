@@ -40,15 +40,16 @@ def send_message(message):
 
 
 def main():
-    current_timestamp = int(time.time())  # начальное значение timestamp
+    current_timestamp = int(time.time())
 
-    while True:  # пока тру
-        try:  # пытаться
-            new_homework = get_homework_statuses(current_timestamp)  # присваиваем результат работы нашей ф-ции
-            if new_homework.get('homeworks'):  # если по гет запросу выдается homeworks
-                send_message(parse_homework_status(new_homework.get('homeworks')[0]))  # послать сообщение судя по всему с id
-            current_timestamp = new_homework.get('current_date')  # обновить timestamp 
-            time.sleep(300)  # опрашивать раз в пять минут
+    while True:
+        try:
+            new_homework = get_homework_statuses(current_timestamp)
+            if new_homework.get('homeworks'):
+                send_message(parse_homework_status(new_homework.get
+                                                   ('homeworks')[0]))
+            current_timestamp = new_homework.get('current_date')
+            time.sleep(300)
 
         except Exception as e:
             print(f'Бот упал с ошибкой: {e}')
