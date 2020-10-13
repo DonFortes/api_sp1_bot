@@ -13,8 +13,9 @@ CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 
 def parse_homework_status(homework):
-    homework_name = ...
-    if ...
+    homework_name = homework.get('homework_name')
+    homework_status = homework.get('status')
+    if homework_status == 'rejected':
         verdict = 'К сожалению в работе нашлись ошибки.'
     else:
         verdict = 'Ревьюеру всё понравилось, можно приступать к следующему уроку.'
@@ -22,25 +23,31 @@ def parse_homework_status(homework):
 
 
 def get_homework_statuses(current_timestamp):
-    ...
-    homework_statuses = ...
-    return homework_statuses.json()
+
+    headers = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
+    from_date = current_timestamp
+    url = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
+    homework_statuses = requests.get(url, headers=headers, params={
+        'from_date': from_date,
+    }).json()
+
+    return homework_statuses
 
 
 def send_message(message):
-    ...
-    return bot.send_message(...)
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    return bot.send_message(chat_id=CHAT_ID, text=message)
 
 
 def main():
     current_timestamp = int(time.time())  # начальное значение timestamp
 
-    while True:
-        try:
-            new_homework = get_homework_statuses(current_timestamp)
-            if new_homework.get('homeworks'):
-                send_message(parse_homework_status(new_homework.get('homeworks')[0]))
-            current_timestamp = new_homework.get('current_date')  # обновить timestamp
+    while True:  # пока тру
+        try:  # пытаться
+            new_homework = get_homework_statuses(current_timestamp)  # присваиваем результат работы нашей ф-ции
+            if new_homework.get('homeworks'):  # если по гет запросу выдается homeworks
+                send_message(parse_homework_status(new_homework.get('homeworks')[0]))  # послать сообщение судя по всему с id
+            current_timestamp = new_homework.get('current_date')  # обновить timestamp 
             time.sleep(300)  # опрашивать раз в пять минут
 
         except Exception as e:
