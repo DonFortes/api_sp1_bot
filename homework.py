@@ -1,8 +1,16 @@
+import logging
 import os
+import time
+
 import requests
 import telegram
-import time
 from dotenv import load_dotenv
+
+logging.basicConfig(
+    filename="test.log",
+    level=logging.DEBUG,
+    format='%(asctime)s:%(levelname)s:%(message)s'
+    )
 
 load_dotenv()
 
@@ -18,10 +26,27 @@ def parse_homework_status(homework):
         homework_status = homework.get('status')
         if homework_status == 'rejected':
             verdict = 'К сожалению в работе нашлись ошибки.'
-        else:
+        elif homework_status == 'approved':
             verdict = 'Ревьюеру всё понравилось, можно приступать к следующему уроку.'
-    except Exception as e:
-        print(f'Возникла проблема: {e}')
+        else:
+            return 'Неизвестный статус домашки'
+
+    except requests.exceptions.ConnectionError as e:
+        logging.debug(f'Возникла проблема ConnectionError: {e}')
+        send_message(f'Возникла проблема ConnectionError: {e}')
+    except requests.exceptions.Timeout as e:
+        logging.debug(f'Timeout Error: {e}.')
+        send_message(f'Возникла проблема Timeout Error: {e}')
+    except requests.exceptions.ValueError as e:
+        logging.debug(f'ValueError: {e}.')
+        send_message(f'Возникла проблема ValueError: {e}')
+    except requests.exceptions.InvalidURL as e:
+        logging.debug(f'InvalidURL: {e}.')
+        send_message(f'Возникла проблема InvalidURL: {e}')
+    except requests.exceptions.RequestException as e:
+        logging.debug(f'Возникла проблема: {e}')
+        send_message(f'Возникла проблема: {e}')
+
     else:
         return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
@@ -36,8 +61,23 @@ def get_homework_statuses(current_timestamp):
         homework_statuses = requests.get(url, headers=headers, params={
             'from_date': from_date,
         }).json()
-    except Exception as e:
-        print(f'Возникла проблема: {e}')
+
+    except requests.exceptions.ConnectionError as e:
+        logging.debug(f'Возникла проблема ConnectionError: {e}')
+        send_message(f'Возникла проблема ConnectionError: {e}')
+    except requests.exceptions.Timeout as e:
+        logging.debug(f'Timeout Error: {e}.')
+        send_message(f'Возникла проблема Timeout Error: {e}')
+    except requests.exceptions.ValueError as e:
+        logging.debug(f'ValueError: {e}.')
+        send_message(f'Возникла проблема ValueError: {e}')
+    except requests.exceptions.InvalidURL as e:
+        logging.debug(f'InvalidURL: {e}.')
+        send_message(f'Возникла проблема InvalidURL: {e}')
+    except requests.exceptions.RequestException as e:
+        logging.debug(f'Возникла проблема: {e}')
+        send_message(f'Возникла проблема: {e}')
+
     else:
         return homework_statuses
 
@@ -58,13 +98,13 @@ def main():
             if new_homework.get('homeworks'):
                 send_message(parse_homework_status(new_homework.get
                                                    ('homeworks')[0]))
-            check_time = new_homework.get('current_date')
+            check_time = new_homework.get('current_date', value=0)
             if check_time is not None:
                 current_timestamp = check_time
             time.sleep(300)
 
         except Exception as e:
-            print(f'Бот упал с ошибкой: {e}')
+            logging.debug(f'Бот упал с ошибкой: {e}')
             time.sleep(5)
             continue
 
